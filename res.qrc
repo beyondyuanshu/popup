@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>res/popCloseBtnHover.png</file>
+        <file>res/popCloseBtnNormal.png</file>
+    </qresource>
+</RCC>

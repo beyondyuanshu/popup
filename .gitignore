@@ -1,0 +1,24 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# For vs
+*.pdb
+
+# For Qt
+ui_*.h
+*.Debug
+*.Release
+*.user
+debug
+release
