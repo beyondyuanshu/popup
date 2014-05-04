@@ -12,6 +12,7 @@
 
 class DialogBase;
 class QPropertyAnimation;
+class CWebView;
 
 class Popup : public QObject
 {
@@ -56,7 +57,6 @@ private:
 };
 
 
-
 // class:: CorenerPop
 class CornerPop : public QWidget
 {
@@ -85,7 +85,7 @@ private:
 
     QPropertyAnimation *m_popAnimation;
 
-    QWebView *m_view;
+    CWebView *m_view;
 
     QPushButton *m_closeBtn;
     QLabel *m_titleLbl;

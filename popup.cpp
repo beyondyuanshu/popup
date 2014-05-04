@@ -1,5 +1,6 @@
 #include "popup.h"
 #include "dialogbase.h"
+#include "cwebview.h"
 
 #include <QUrl>
 #include <QDesktopWidget>
@@ -13,6 +14,7 @@
 #include <QSpacerItem>
 #include <QPropertyAnimation>
 #include <QDesktopServices>
+#include <QWebFrame>
 
 
 Popup::Popup(QObject *parent) :
@@ -77,7 +79,7 @@ void CentralPop::openLink(const QUrl &url)
 
 
 
-// class: HintPop
+// class: CornerPop
 CornerPop::CornerPop(QWidget *parent) :
     QWidget(parent),
     m_drag(false),
@@ -98,7 +100,7 @@ CornerPop::CornerPop(QWidget *parent) :
     topLayout->addSpacerItem(topSpacer);
     topLayout->addWidget(m_closeBtn);
 
-    m_view = new QWebView(this);
+    m_view = new CWebView(this);
     m_view->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
 
     QVBoxLayout *wholeLayout = new QVBoxLayout(this);
@@ -116,7 +118,7 @@ CornerPop::CornerPop(QWidget *parent) :
 
     // initial connect
     connect(m_closeBtn, SIGNAL(clicked()), this, SLOT(btnClicked()));
-    connect(m_view, SIGNAL(linkClicked(QUrl)), this, SLOT(openLink(QUrl)));
+    //connect(m_view, SIGNAL(linkClicked(QUrl)), this, SLOT(openLink(QUrl)));
 }
 
 CornerPop::~CornerPop()

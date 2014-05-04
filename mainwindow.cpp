@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "cwebview.h"
 #include <QUrl>
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -8,8 +9,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    QUrl url("http://www.chinadaily.com.cn/china/2012qq_index.html");
-    Popup::showCentralPop(NULL, url);
+//    QUrl url("http://www.chinadaily.com.cn/china/2012qq_index.html");
+//    Popup::showCentralPop(NULL, url);
 
 }
 
@@ -22,4 +23,5 @@ void MainWindow::on_pushButton_clicked()
 {
     QUrl url("http://www.chinadaily.com.cn/china/2012qq_index.html");
     Popup::showCornerPop(NULL, url);
+
 }

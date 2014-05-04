@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include "popup.h"
 
+class CWebView;
+
 namespace Ui {
 class MainWindow;
 }
@@ -21,6 +23,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+
 
 };
 
