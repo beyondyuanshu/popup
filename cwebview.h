@@ -6,7 +6,6 @@
 class QMouseEvent;
 class QPoint;
 
-class CWebPage;
 class CWebViewHandler;
 
 class CWebView : public QWebView
@@ -35,13 +34,6 @@ private slots:
     void clickedUrl(const QUrl &url);
 
 };
-
-
-class CWebPage : public QWebPage
-{
-    QString userAgentForUrl(const QUrl &url) const;
-};
-
 
 class CWebViewHandler
 {

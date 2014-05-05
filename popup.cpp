@@ -1,21 +1,24 @@
 #include "popup.h"
-#include "dialogbase.h"
 #include "cwebview.h"
 
-#include <QUrl>
-#include <QDesktopWidget>
-#include <QApplication>
+#include <QLabel>
+#include <QToolBar>
 #include <QRect>
-#include <QDebug>
+#include <QPoint>
+#include <QWebFrame>
+#include <QWebPage>
 #include <QWebView>
+#include <QAction>
 #include <QPushButton>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QSpacerItem>
+#include <QApplication>
 #include <QPropertyAnimation>
+#include <QUrl>
+#include <QDesktopWidget>
 #include <QDesktopServices>
-#include <QWebFrame>
-
+#include <QDebug>
 
 Popup::Popup(QObject *parent) :
     QObject(parent)
@@ -28,71 +31,37 @@ Popup::~Popup()
 
 void Popup::showCentralPop(QWidget *parent, const QUrl &url)
 {
-    if(parent == NULL) {
-        parent = new QWidget();
-    }
-
     CentralPop *centralPop = new CentralPop(parent);
     centralPop->pop(url);
 }
 
 void Popup::showCornerPop(QWidget *parent, const QUrl &url)
 {
-    if (parent == NULL) {
-        parent = new QWidget();
-    }
-
     CornerPop *cornerPop = new CornerPop(parent);
     cornerPop->pop(url);
 }
 
 
-// class:: CentralPop
-CentralPop::CentralPop(QWidget *parent) :
-    DialogBase(parent)
-{
-    m_view = new QWebView(this->contentView);
-    m_view->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
-
-    connect(m_view, SIGNAL(linkClicked(QUrl)), this, SLOT(openLink(QUrl)));
-}
-
-CentralPop::~CentralPop()
-{
-    delete m_view;
-}
-
-void CentralPop::pop(const QUrl &url)
-{
-    m_view->load(url);
-
-    this->show();
-    this->move((QApplication::desktop()->width() - this->width()) / 2,
-               (QApplication::desktop()->height() - this->height()) / 2);
-
-}
-
-void CentralPop::openLink(const QUrl &url)
-{
-    QDesktopServices::openUrl(url);
-}
-
-
-
-// class: CornerPop
-CornerPop::CornerPop(QWidget *parent) :
+// class: PopBase
+PopBase::PopBase(QWidget *parent) :
     QWidget(parent),
     m_drag(false),
-    m_popAnimation(0)
+    m_navigationBar(0),
+    m_goBackAction(0),
+    m_goForwardAction(0),
+    m_reloadAction(0),
+    m_webView(0),
+    m_popAnimation(0),
+    bUseAnimation(false)
 {
-    this->setWindowFlags(Qt::FramelessWindowHint | Qt::ToolTip );
-
-    m_popAnimation = new QPropertyAnimation(this, "geometry", this);
+    this->setWindowFlags(Qt::FramelessWindowHint | Qt::Window | Qt::ToolTip);
+    //this->setContextMenuPolicy(Qt::NoContextMenu);
 
     m_closeBtn = new QPushButton(QString(""), this);
-    m_closeBtn->setFlat(false);
-    m_titleLbl = new QLabel(QString("News Notice"), this);
+    m_titleLbl = new QLabel(QString("News..."), this);
     m_titleLbl->setAlignment(Qt::AlignLeft | Qt::AlignBottom);
+
+    connect(m_closeBtn, SIGNAL(clicked()), this, SLOT(close()));
 
     QSpacerItem *topSpacer = new QSpacerItem(0, 0, QSizePolicy::Expanding);
     QHBoxLayout *topLayout = new QHBoxLayout();
@@ -100,36 +69,44 @@ CornerPop::CornerPop(QWidget *parent) :
     topLayout->addSpacerItem(topSpacer);
     topLayout->addWidget(m_closeBtn);
 
-    m_view = new CWebView(this);
-    m_view->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
+    m_goBackAction = new QAction(this);
+    m_goBackAction->setIcon(QIcon(QLatin1String(":/res/arrow_left_green_1.png")));
+    connect(m_goBackAction, SIGNAL(triggered()), this, SLOT(slot_navigation()));
+
+    m_goForwardAction = new QAction(this);
+    m_goForwardAction->setIcon(QIcon(QLatin1String(":/res/arrow_right_green_1.png")));
+    connect(m_goForwardAction, SIGNAL(triggered()), this, SLOT(slot_navigation()));
+
+    m_reloadAction = new QAction(this);
+    m_reloadAction->setIcon(QIcon(QLatin1String(":/res/nav_refresh_green.png")));
+    connect(m_reloadAction, SIGNAL(triggered()), this, SLOT(slot_navigation()));
+
+    m_navigationBar = new QToolBar(this);
+    m_navigationBar->addAction(m_goBackAction);
+    m_navigationBar->addAction(m_goForwardAction);
+    m_navigationBar->addAction(m_reloadAction);
+
+    m_webView = new CWebView(this);
+    m_webView->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
+    connect(m_webView, SIGNAL(loadFinished(bool)), this, SLOT(slot_loadFinished(bool)));
 
     QVBoxLayout *wholeLayout = new QVBoxLayout(this);
+    wholeLayout->setMargin(4);
     wholeLayout->addLayout(topLayout);
-    wholeLayout->addWidget(m_view);
+    wholeLayout->addWidget(m_navigationBar);
+    wholeLayout->addWidget(m_webView);
 
-    this->resize(320, 200);
+    this->resize(600, 400);
 
-    // set stylesheet
+    // set sytle
     m_closeBtn->setObjectName("m_closeBtn");
-    m_closeBtn->setStyleSheet("QPushButton#m_closeBtn{border-image:url(:/res/popCloseBtnNormal.png);width:11px; height:10px;} \
-                              QPushButton#m_closeBtn:hover{border-image:url(:/res/popCloseBtnHover.png);width:11px; height:10px;}");
-    m_titleLbl->setObjectName("m_titleLbl");
-    m_titleLbl->setStyleSheet("QLabel {color: rgb(96, 96, 96); font-size: 14px; font-weight: bold}");
-
-    // initial connect
-    connect(m_closeBtn, SIGNAL(clicked()), this, SLOT(btnClicked()));
-    //connect(m_view, SIGNAL(linkClicked(QUrl)), this, SLOT(openLink(QUrl)));
+    m_closeBtn->setStyleSheet("QPushButton#m_closeBtn{border-image:url(:/res/popCloseBtnNormal.png);width:15px; height:13px;} \
+                              QPushButton#m_closeBtn:hover{border-image:url(:/res/popCloseBtnHover.png);width:15px; height:13px;}");
+                              m_titleLbl->setObjectName("m_titleLbl");
+            m_titleLbl->setStyleSheet("QLabel {color: rgb(96, 96, 96); font-size: 14px; font-weight: bold}");
 }
 
-CornerPop::~CornerPop()
-{
-    delete m_popAnimation;
-    delete m_closeBtn;
-    delete m_titleLbl;
-    delete m_view;
-}
-
-void CornerPop::mousePressEvent(QMouseEvent *e)
+void PopBase::mousePressEvent(QMouseEvent *e)
 {
     if (e->button() == Qt::LeftButton)
     {
@@ -139,7 +116,7 @@ void CornerPop::mousePressEvent(QMouseEvent *e)
     }
 }
 
-void CornerPop::mouseMoveEvent(QMouseEvent *e)
+void PopBase::mouseMoveEvent(QMouseEvent *e)
 {
     if (m_drag && (e->buttons() && Qt::LeftButton))
     {
@@ -148,37 +125,118 @@ void CornerPop::mouseMoveEvent(QMouseEvent *e)
     }
 }
 
-void CornerPop::mouseReleaseEvent(QMouseEvent *e)
+void PopBase::mouseReleaseEvent(QMouseEvent *e)
 {
     m_drag = false;
 }
 
-void CornerPop::btnClicked()
+void PopBase::setTitle(const QString &title)
+{
+    m_titleLbl->setText(title);
+}
+
+void PopBase::slot_btnClicked()
 {
     this->close();
 }
 
-void CornerPop::openLink(const QUrl &url)
+void PopBase::slot_navigation()
 {
-    QDesktopServices::openUrl(url);
+    QAction *action = dynamic_cast<QAction *>(sender());
+
+    if (NULL == action)
+    {
+        return;
+    }
+    if (m_goBackAction == action)
+    {
+        this->m_webView->back();
+    }
+    else if (m_goForwardAction == action)
+    {
+        this->m_webView->forward();
+    }
+    else if (m_reloadAction == action)
+    {
+        this->m_webView->reload();
+    }
+}
+
+void PopBase::slot_loadFinished(bool bOK)
+{
+    if (bOK)
+    {
+        this->show();
+    }
+    else
+    {
+        qDebug() << "Url loade error!";
+    }
+}
+
+void PopBase::loadUrl(const QUrl &url)
+{
+    m_webView->load(url);
+}
+
+
+// class: CentralPop
+CentralPop::CentralPop(QWidget *parent) :
+    PopBase(parent)
+{
+}
+
+CentralPop::~CentralPop()
+{
+}
+
+void CentralPop::pop(const QUrl &url)
+{
+    loadUrl(url);
+    this->move((QApplication::desktop()->width() - this->width()) / 2,
+               (QApplication::desktop()->height() - this->height()) / 2);
+}
+
+
+// class: CornerPop
+CornerPop::CornerPop(QWidget *parent) :
+    PopBase(parent),
+    m_popAnimation(0)
+{
+    m_popAnimation = new QPropertyAnimation(this, "geometry", this);
+    this->resize(320, 200);
+}
+
+CornerPop::~CornerPop()
+{
 }
 
 void CornerPop::pop(const QUrl &url)
 {
-    m_view->load(url);
-    this->show();
+    loadUrl(url);
+}
 
-    QRect rect = QApplication::desktop()->availableGeometry(-1);
-    int x = rect.width() - this->width();
-
-    if(!m_popAnimation)
+void CornerPop::slot_loadFinished(bool bOK)
+{
+    if (bOK)
     {
-        m_popAnimation = new QPropertyAnimation(this, "geometry", this);
-    }
+        QRect rect = QApplication::desktop()->availableGeometry(-1);
+        int x = rect.width() - this->width();
 
-    // set animation
-    m_popAnimation->setDuration(1000);
-    m_popAnimation->setStartValue(QRect(x, rect.height(), width(), height()));
-    m_popAnimation->setEndValue(QRect(x, rect.height() - this->height(), width(), height()));
-    m_popAnimation->start();
+        if(!m_popAnimation)
+        {
+            m_popAnimation = new QPropertyAnimation(this, "geometry", this);
+        }
+
+        this->show();
+        // set animation
+        m_popAnimation->setDuration(1000);
+        m_popAnimation->setStartValue(QRect(x, rect.height(), width(), height()));
+        m_popAnimation->setEndValue(QRect(x, rect.height() - this->height(), width(), height()));
+        m_popAnimation->start();
+    }
+    else
+    {
+        qDebug() << "Url error!";
+    }
 }

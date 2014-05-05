@@ -19,6 +19,6 @@
 ui_*.h
 *.Debug
 *.Release
-*.user
+*.user.*
 debug
 release

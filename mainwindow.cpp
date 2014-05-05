@@ -9,8 +9,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-//    QUrl url("http://www.chinadaily.com.cn/china/2012qq_index.html");
-//    Popup::showCentralPop(NULL, url);
+    QUrl url("http://www.baidu.com/");
+    Popup::showCentralPop(NULL, url);
 
 }
 

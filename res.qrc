@@ -2,5 +2,8 @@
     <qresource prefix="/">
         <file>res/popCloseBtnHover.png</file>
         <file>res/popCloseBtnNormal.png</file>
+        <file>res/arrow_left_green_1.png</file>
+        <file>res/arrow_right_green_1.png</file>
+        <file>res/nav_refresh_green.png</file>
     </qresource>
 </RCC>

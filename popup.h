@@ -3,16 +3,15 @@
 
 #include <QObject>
 #include <QWidget>
-#include <QDialog>
-#include <QWebView>
-#include <QPushButton>
-#include <QLabel>
-#include <QPoint>
-#include "dialogbase.h"
+#include <QMouseEvent>
 
-class DialogBase;
+class QLabel;
+class QPushButton;
+class QToolBar;
+class QAction;
+class QWebView;
+class QPoint;
 class QPropertyAnimation;
-class CWebView;
 
 class Popup : public QObject
 {
@@ -21,58 +20,31 @@ public:
     explicit Popup(QObject *parent = 0);
     ~Popup();
 
-signals:
-
 public:
     static void showCentralPop(QWidget *parent, const QUrl &url);
     static void showCornerPop(QWidget *parent, const QUrl &url);
-
-public slots:
-
-private:
-
 };
 
 
-// class:: CentralPop
-class CentralPop : public DialogBase
+// class: PopBase
+class PopBase : public QWidget
 {
     Q_OBJECT
 public:
-    explicit CentralPop(QWidget *parent = 0);
-    ~CentralPop();
-
-signals:
+    explicit PopBase(QWidget *parent = 0);
 
 public:
-    void pop(const QUrl &url);
+    void setTitle(const QString &title);
+    void loadUrl(const QUrl &url);
+
+public:
+    QPushButton *m_closeBtn;
+    QLabel *m_titleLbl;
 
 public slots:
-    void openLink(const QUrl &url);
-
-private:
-    QWebView *m_view;
-
-
-};
-
-
-// class:: CorenerPop
-class CornerPop : public QWidget
-{
-    Q_OBJECT
-public:
-    explicit CornerPop(QWidget *parent = 0);
-    ~CornerPop();
-
-signals:
-
-public:
-    void pop(const QUrl &url);
-
-public slots:
-    void btnClicked();
-    void openLink(const QUrl &url);
+    void slot_btnClicked();
+    void slot_navigation();
+    virtual void slot_loadFinished(bool bOK);
 
 protected:
     void mousePressEvent(QMouseEvent *e);
@@ -83,12 +55,46 @@ private:
     bool m_drag;
     QPoint m_position;
 
+    QToolBar *m_navigationBar;
+    QAction *m_goBackAction;
+    QAction *m_goForwardAction;
+    QAction *m_reloadAction;
+
+    QWebView *m_webView;
     QPropertyAnimation *m_popAnimation;
+    bool bUseAnimation;
+};
 
-    CWebView *m_view;
 
-    QPushButton *m_closeBtn;
-    QLabel *m_titleLbl;
+// class: CentralPop
+class CentralPop : public PopBase
+{
+    Q_OBJECT
+public:
+    explicit CentralPop(QWidget *parent = 0);
+    ~CentralPop();
+
+public:
+    void pop(const QUrl &url);
+};
+
+
+// class: CorenerPop
+class CornerPop : public PopBase
+{
+    Q_OBJECT
+public:
+    explicit CornerPop(QWidget *parent = 0);
+    ~CornerPop();
+
+public:
+    void pop(const QUrl &url);
+
+public slots:
+    void slot_loadFinished(bool bOK);
+
+private:
+    QPropertyAnimation *m_popAnimation;
 };
 
 #endif // POPUP_H

@@ -1,4 +1,5 @@
 #include "cwebview.h"
+#include "cwebpage.h"
 
 #include <QMouseEvent>
 #include <QWebElement>
@@ -67,21 +68,14 @@ QWebPage::WebAction CWebView::getUrlAction(const QUrl &url) const
 void CWebView::clickedUrl(const QUrl &url)
 {
     qDebug() << url;
-    if (QWebPage::OpenLink == getUrlAction(url))
+    if (QWebPage::OpenLinkInNewWindow == getUrlAction(url))
     {
         QDesktopServices::openUrl(url);
     }
-    else if (QWebPage::OpenLinkInNewWindow == getUrlAction(url))
+    else if (QWebPage::OpenLink == getUrlAction(url))
     {
         // do sth.
         this->load(url);
 
     }
-}
-
-
-// CWebPage
-QString CWebPage::userAgentForUrl(const QUrl &url) const
-{
-    return "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)";
 }

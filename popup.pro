@@ -15,16 +15,15 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     popup.cpp \
-    dialogbase.cpp \
-    cwebview.cpp
+    cwebview.cpp \
+    cwebpage.cpp
 
 HEADERS  += mainwindow.h \
     popup.h \
-    dialogbase.h \
-    cwebview.h
+    cwebview.h \
+    cwebpage.h
 
-FORMS    += mainwindow.ui \
-    popwidget.ui
+FORMS    += mainwindow.ui
 
 RESOURCES += \
     res.qrc
